@@ -1,6 +1,8 @@
 TARGET = capusbpsp
 OBJS = main.o
 
+LIBS = -lpsprtc
+
 BUILD_PRX = 1
 PRX_EXPORTS = exports.exp
 

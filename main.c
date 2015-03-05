@@ -17,13 +17,48 @@
  */
 
 #include <pspkernel.h>
+#include <psprtc.h>
+#include <stdio.h>
+#include <string.h>
 
 PSP_MODULE_INFO("CAPUSBPSP", PSP_MODULE_KERNEL, 0, 0);
 
 SceUID thid = 0;
 
+static int dbgPuts(const char *s)
+{
+	pspTime time;
+	SceUID fd;
+	char data[16];
+	size_t size;
+	int ret;
+
+	size = strlen(s);
+
+	fd = sceIoOpen("ms0:/PSP/LOG.TXT",
+		PSP_O_WRONLY | PSP_O_APPEND | PSP_O_CREAT,
+		0777);
+	if (fd < 0)
+		return fd;
+
+	if (!sceRtcGetCurrentClockLocalTime(&time)) {
+		sprintf(data, "[%02d:%02d.%06d] ",
+			time.minutes, time.seconds, time.microseconds);
+		sceIoWrite(fd, data, sizeof(data) - 1);
+	}
+
+	ret = sceIoWrite(fd, s, size);
+	if (ret < 0)
+		return ret;
+
+	return sceIoClose(fd);
+}
+
 static int main()
 {
+	dbgPuts("Capture started\n");
+	dbgPuts("Capture ended\n");
+
 	return 0;
 }
 
