@@ -5,16 +5,18 @@
 #include <psprtc.h>
 #include "io.h"
 
-typedef struct {
-	void *next;
+typedef struct _queue_t queue_t;
+
+struct _queue_t {
+	queue_t *next;
 	SceUID blockid;
 	size_t size;
-} queue_t;
+};
 
-SceUID cupIoThid = 0;
+static SceUID cupIoThid = 0;
 
-size_t left = 0;
-char buf[256];
+static size_t left = 0;
+static char buf[256];
 
 static queue_t *queue = NULL;
 
@@ -68,10 +70,17 @@ int logTime()
 	int ret;
 	pspTime time;
 
+	if (left >= sizeof(buf))
+		return 0;
+
 	ret = sceRtcGetCurrentClockLocalTime(&time);
-	if (!ret)
-		left += sprintf(buf + left, "[%02d:%02d.%06d] ",
+	if (!ret) {
+		ret = snprintf(buf + left, sizeof(buf) - left,
+			"[%02d:%02d.%06d] ",
 			time.minutes, time.seconds, time.microseconds);
+		if (ret > 0)
+			left += ret;
+	}
 
 	return ret;
 }
@@ -82,6 +91,9 @@ int cupPuts(const char *s)
 
 	if (s == NULL)
 		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
+
+	if (left >= sizeof(buf))
+		return SCE_KERNEL_ERROR_NO_MEMORY;
 
 	logTime();
 
@@ -105,6 +117,9 @@ int cupPrintf(const char *fmt, ...)
 
 	if (fmt == NULL)
 		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
+
+	if (left >= sizeof(buf))
+		return 0;
 
 	logTime();
 
@@ -177,9 +192,8 @@ int cupIoWrite(const char *pre, void *data, SceSize size)
 
 	len = sprintf(p, "%s_%02d%02d%06d.BIN", pre,
 		time.minutes, time.seconds, time.microseconds);
-	p += len + 1;
 
-	memcpy(p, data, size);
+	memcpy(p + len + 1, data, size);
 
 	sceKernelWakeupThread(cupIoThid);
 
