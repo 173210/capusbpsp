@@ -2,7 +2,7 @@
 #include <pspkernel.h>
 #include <psprtc.h>
 #include <pspusbbus.h>
-#include "log.h"
+#include "io.h"
 #include "hooks.h"
 
 typedef struct {
@@ -180,11 +180,8 @@ static int dumpConf(const char *func, const char *desc,
 static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 {
 	static const char f[] = "sceUsbbdReqSend";
-	pspTime time;
-	SceUID fd;
-	const char *p;
-	char file[sizeof(f) + 15];
 	int (* _sceUsbbdReqSend)(struct UsbdDeviceReq *req);
+	const char *p;
 	int ret;
 
 	if (req == NULL || req->endp == NULL || req->data == NULL)
@@ -193,14 +190,7 @@ static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 	logPrintf("%s: endpnum = %d\n", f, req->endp->endpnum);
 	logPrintf("%s: size = %d\n", f, req->size);
 
-	if (!sceRtcGetCurrentClockLocalTime(&time)) {
-		sprintf(file, "%s_%02d%02d%06d.BIN", f,
-			time.minutes, time.seconds, time.microseconds);
-		fd = sceIoOpen(file, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0777);
-		if (fd > 0) {
-			sceIoWrite(fd, req->data, req->size);
-		}
-	}
+	cupIoWrite(f, req->data, req->size);
 
 	_sceUsbbdReqSend = calls[CALL_sceUsbbdReqSend].org;
 	ret = _sceUsbbdReqSend(req);
@@ -225,11 +215,8 @@ static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 static int hookUsbbdReqRecv(struct UsbdDeviceReq *req)
 {
 	static const char *f = "sceUsbbdReqRecv";
-	pspTime time;
-	SceUID fd;
-	const char *p;
-	char file[sizeof(f) + 15];
 	int (* _sceUsbbdReqRecv)(struct UsbdDeviceReq *req);
+	const char *p;
 	int ret;
 
 	if (req == NULL || req->endp == NULL || req->data == NULL)
@@ -241,14 +228,7 @@ static int hookUsbbdReqRecv(struct UsbdDeviceReq *req)
 	_sceUsbbdReqRecv = calls[CALL_sceUsbbdReqRecv].org;
 	ret = _sceUsbbdReqRecv(req);
 
-	if (!sceRtcGetCurrentClockLocalTime(&time)) {
-		sprintf(file, "%s_%02d%02d%06d.BIN\n", f,
-			time.minutes, time.seconds, time.microseconds);
-		fd = sceIoOpen(file, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0777);
-		if (fd > 0) {
-			sceIoWrite(fd, req->data, req->size);
-		}
-	}
+	cupIoWrite(f, req->data, req->size);
 
 	switch (req->retcode) {
 		case 0:

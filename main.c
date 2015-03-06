@@ -21,7 +21,7 @@
 #include <string.h>
 #include <systemctrl.h>
 #include <pspkernel.h>
-#include "log.h"
+#include "io.h"
 #include "hooks.h"
 
 PSP_MODULE_INFO("CAPUSBPSP", PSP_MODULE_KERNEL, 0, 0);
@@ -41,7 +41,7 @@ static char modname[32];
 static const SceModule2 *module = NULL;
 static const stub_t *stub = NULL;
 
-static SceUID thid = 0;
+static SceUID mainThid = 0;
 
 static int32_t jAsm(const void *p)
 {
@@ -114,7 +114,7 @@ static int unhook(const stub_t *stub, call_t *calls, unsigned callsNum)
 	return 0;
 }
 
-int mainThread(SceSize args, char *argp)
+int mainThread(SceSize args, void *argp)
 {
 	char *p;
 	SceUID fd;
@@ -156,7 +156,7 @@ int mainThread(SceSize args, char *argp)
 		ret = SCE_KERNEL_ERROR_ERROR;
 	else {
 		ret = hook(stub, calls, CALL_NUM);
-		logPuts("capusbpsp Registered\n");
+		cupIoInit(args, argp);
 	}
 
 exit:
@@ -169,22 +169,24 @@ int module_start(SceSize args, void *argp)
 	int ret;
 
 	ret = sceKernelCreateThread(
-		module_info.modname, (void *)mainThread, 111, 2048, 0, NULL);
+		module_info.modname, mainThread, 111, 2048, 0, NULL);
 	if (ret < 0)
-		return thid;
-	thid = ret;
+		return ret;
+	mainThid = ret;
 
-	ret = sceKernelStartThread(thid, args, argp);
+	ret = sceKernelStartThread(mainThid, args, argp);
 	if (ret)
-		sceKernelDeleteThread(thid);
+		sceKernelDeleteThread(mainThid);
 
 	return ret;
 }
 
 int module_stop()
 {
-	if (thid)
-		sceKernelTerminateDeleteThread(thid);
+	if (mainThid)
+		sceKernelTerminateDeleteThread(mainThid);
+
+	cupIoDeinit();
 
 	if (module == (SceModule2 *)sceKernelFindModuleByName(modname)
 		&& stub == findStub(module, "sceUsbBus_driver"))
