@@ -1,7 +1,9 @@
 TARGET = capusbpsp
-OBJS = main.o
 
+OBJS = main.o log.o hooks.o
 LIBS = -lpsprtc
+
+CFLAGS = -O2 -G0 -Wall
 
 BUILD_PRX = 1
 PRX_EXPORTS = exports.exp

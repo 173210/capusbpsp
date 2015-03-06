@@ -16,179 +16,165 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include <systemctrl.h>
-#include <pspkernel.h>
-#include <psprtc.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <systemctrl.h>
+#include <pspkernel.h>
+#include "log.h"
+#include "hooks.h"
 
 PSP_MODULE_INFO("CAPUSBPSP", PSP_MODULE_KERNEL, 0, 0);
 
 typedef struct {
-	int32_t nid;
-	const void *org;
-	const void *hook;
-} call_t;
+	char *name;
+	uint32_t flags;
+	uint8_t funcNum;
+	uint8_t varNum;
+	int32_t *nids;
+	int32_t *imports;
+} stub_t;
 
-typedef struct {
-	const char *name;
-	unsigned callsNum;
-	call_t *calls;
-} lib_t;
+static const int32_t J_OPCODE = 0x08000000;
 
-lib_t libs[] = {
-};
-
-static const char *modname = "sceUSB_Driver";
+static char modname[32];
 static const SceModule2 *module = NULL;
-
+static const stub_t *stub = NULL;
 
 static SceUID thid = 0;
 
-static int dbgPuts(const char *s)
+static int32_t jAsm(const void *p)
 {
-	pspTime time;
+	return (intptr_t)p & 3 ? SCE_KERNEL_ERROR_ILLEGAL_ADDRESS :
+		J_OPCODE | (((intptr_t)p >> 2) & 0x03FFFFFF);
+}
+
+static void *getPtrWithJ(int32_t instr)
+{
+	return (instr & 0xFC000000) == J_OPCODE ?
+		(void *)(((instr & 0x03FFFFFF) << 2) | 0x80000000) :
+		NULL;
+}
+
+static stub_t *findStub(const SceModule2 *mod, const char *name)
+{
+	const stub_t *stub;
+
+	if (mod != NULL && mod->stub_top != NULL && name != NULL)
+		for (stub = mod->stub_top;
+			stub != mod->stub_top + mod->stub_size / sizeof(stub_t);
+			stub++)
+			if (!strcmp(stub->name, name))
+				return (stub_t *)stub;
+
+	return NULL;
+}
+
+static int hook(const stub_t *stub, call_t *calls, unsigned callsNum)
+{
+	int32_t *nid, *import;
+	call_t *call;
+
+	if (stub == NULL || stub->nids == NULL || stub->imports == NULL
+		|| calls == NULL)
+		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
+
+	import = stub->imports;
+	for (nid = stub->nids; nid != stub->nids + stub->funcNum; nid++) {
+		for (call = calls; call != calls + callsNum; call++)
+			if (call->nid == *nid) {
+				call->org = getPtrWithJ(*import);
+				*import = jAsm(call->hook);
+				break;
+			}
+		import += 2;
+	}
+
+	return 0;
+}
+
+static int unhook(const stub_t *stub, call_t *calls, unsigned callsNum)
+{
+	int32_t *nid, *import;
+	call_t *call;
+
+	if (stub == NULL || calls == NULL)
+		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
+
+	import = stub->imports;
+	for (nid = stub->nids; nid != stub->nids + stub->funcNum; nid++) {
+		for (call = calls; call != calls + callsNum; call++)
+			if (call->nid == *nid && call->org != NULL) {
+				*import = jAsm(call->org);
+				break;
+			}
+		import++;
+	}
+
+	return 0;
+}
+
+int mainThread(SceSize args, char *argp)
+{
+	char *p;
 	SceUID fd;
-	char data[16];
-	size_t size;
 	int ret;
 
-	size = strlen(s);
+	p = strrchr(argp, '/');
+	if (p != NULL)
+		*p = 0;
 
-	fd = sceIoOpen("ms0:/PSP/LOG.TXT",
-		PSP_O_WRONLY | PSP_O_APPEND | PSP_O_CREAT,
-		0777);
-	if (fd < 0)
-		return fd;
+	ret = sceIoChdir(argp);
+	if (ret)
+		goto exit;
 
-	if (!sceRtcGetCurrentClockLocalTime(&time)) {
-		sprintf(data, "[%02d:%02d.%06d] ",
-			time.minutes, time.seconds, time.microseconds);
-		sceIoWrite(fd, data, sizeof(data) - 1);
+	fd = sceIoOpen("TARGET.TXT", PSP_O_RDONLY, 0777);
+	if (fd < 0) {
+		ret = fd;
+		goto exit;
 	}
 
-	ret = sceIoWrite(fd, s, size);
+	ret = sceIoRead(fd, modname, sizeof(modname));
 	if (ret < 0)
-		return ret;
+		goto exit;
 
-	return sceIoClose(fd);
-}
+	sceIoClose(fd);
 
-static int resolveCallsInLib(const struct SceLibraryEntryTable *ent, call_t *calls, unsigned callsNum)
-{
-	int32_t *p;
-	call_t *call;
-
-	if (ent == NULL || call == NULL)
-		return SCE_KERNEL_ERROR_ERROR;
-
-	for (p = ent->entrytable; p != ent->entrytable + ent->stubcount; p++)
-		for (call = calls; call != calls + callsNum; call++)
-			if (*p == call->nid)
-				call->org = (void *)(*(p + ent->stubcount + ent->vstubcount));
-
-	return 0;
-}
-
-static int resolveCallsInModule(const SceModule2 *module, const lib_t *libs, unsigned libsNum)
-{
-	const struct SceLibraryEntryTable *p;
-	const lib_t *lib;
-
-	if (module == NULL || libs == NULL)
-		return SCE_KERNEL_ERROR_ERROR;
-
-	for (p = module->ent_top; 
-		(intptr_t)p < (intptr_t)module->ent_top + module->ent_size * 4;
-		p = (void *)((intptr_t)p + p->len * 4))
-		for (lib = libs; lib != libs + libsNum; lib++)
-			if (!strcmp(p->libname, libs->name))
-				resolveCallsInLib(p, libs->calls, libs->callsNum);
-
-	return 0;
-}
-
-static int hookCallsInModule(const lib_t *libs, unsigned libsNum)
-{
-	const call_t *call;
-	const lib_t *lib;
-	void *p;
-	const void **tbl;
-	int size;
-
-	if (libs == NULL)
-		return -1;
-
-	__asm__("cfc0 %0, $12" : "=r"(p));
-
-	tbl = (const void **)p + 4;
-	for (size = ((int *)p)[3] - 16; size > 0; size -= sizeof(void *)) {
-		for (lib = libs; lib != libs + libsNum; lib++)
-			for (call = lib->calls; call != lib->calls + lib->callsNum; call++)
-				if (*tbl == call->org)
-					*tbl = call->hook;
-		tbl++;
-	}
-
-	return 0;
-}
-
-static int unhookCallInModule(const lib_t *libs, unsigned libsNum)
-{
-	const call_t *call;
-	const lib_t *lib;
-	void *p;
-	const void **tbl;
-	int size;
-
-	if (libs == NULL)
-		return -1;
-
-	__asm__("cfc0 %0, $12" : "=r"(p));
-
-	tbl = (const void **)p + 4;
-	for (size = ((int *)p)[3] - 16; size > 0; size -= sizeof(void *)) {
-		for (lib = libs; lib != libs + libsNum; lib++)
-			for (call = lib->calls; call != lib->calls + lib->callsNum; call++)
-				if (*tbl == call->hook)
-					*tbl = call->org;
-		tbl++;
-	}
-
-	return 0;
-}
-
-static int main()
-{
-	const unsigned libsNum = sizeof(libs) / sizeof(lib_t);
-	call_t *call;
-	void *p;
+	for (p = modname; p != modname + sizeof(modname); p++)
+		if (*p == 0 || *p == '\r' || *p == '\n') {
+			*p = 0;
+			break;
+		}
 
 	do {
-		sceKernelDelayThread(65536);
 		module = (SceModule2 *)sceKernelFindModuleByName(modname);
 	} while (module == NULL);
 
-	resolveCallsInModule(module, libs, libsNum);
-	hookCallsInModule(libs, libsNum);
+	stub = findStub(module, "sceUsbBus_driver");
+	
+	if (stub == NULL)
+		ret = SCE_KERNEL_ERROR_ERROR;
+	else {
+		ret = hook(stub, calls, CALL_NUM);
+		logPuts("capusbpsp Registered\n");
+	}
 
-	dbgPuts("capusbpsp Registered\n");
-
-	return 0;
+exit:
+	sceKernelExitDeleteThread(ret);
+	return ret;
 }
 
-int module_start(SceSize arglen, void *argp)
+int module_start(SceSize args, void *argp)
 {
 	int ret;
 
 	ret = sceKernelCreateThread(
-		module_info.modname, main, 32, 2048, 0, NULL);
+		module_info.modname, (void *)mainThread, 111, 2048, 0, NULL);
 	if (ret < 0)
 		return thid;
 	thid = ret;
 
-	ret = sceKernelStartThread(thid, arglen, argp);
+	ret = sceKernelStartThread(thid, args, argp);
 	if (ret)
 		sceKernelDeleteThread(thid);
 
@@ -200,9 +186,9 @@ int module_stop()
 	if (thid)
 		sceKernelTerminateDeleteThread(thid);
 
-	if (module != NULL && module == (SceModule2 *)sceKernelFindModuleByName(modname))
-		unhookCallInModule(libs, sizeof(libs) / sizeof(lib_t));
+	if (module == (SceModule2 *)sceKernelFindModuleByName(modname)
+		&& stub == findStub(module, "sceUsbBus_driver"))
+		unhook(stub, calls, CALL_NUM);
 
-	dbgPuts("capusbpsp Unregistered\n");
 	return 0;
 }
