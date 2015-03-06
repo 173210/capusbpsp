@@ -76,7 +76,7 @@ int logTime()
 	return ret;
 }
 
-int logPuts(const char *s)
+int cupPuts(const char *s)
 {
 	char *p;
 
@@ -98,7 +98,7 @@ int logPuts(const char *s)
 	return 0;
 }
 
-int logPrintf(const char *fmt, ...)
+int cupPrintf(const char *fmt, ...)
 {
 	va_list va;
 	int ret;
@@ -135,7 +135,7 @@ int cupIoInit(SceSize len, char *path)
 	if (ret)
 		sceKernelDeleteThread(cupIoThid);
 
-	logPrintf("capusbpsp started\n");
+	cupPrintf("capusbpsp started\n");
 
 	return ret;
 }

@@ -81,26 +81,26 @@ static int dumpDev(const char *func, const char *desc, const void *dev)
 		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
 
 	p = dev;
-	logPrintf("%s: GET_DESCRIPTOR(%s)\n", func, desc);
-	logPrintf("%s:  bLength = %d, .bDescriptorType = %d (%s)\n",
+	cupPrintf("%s: GET_DESCRIPTOR(%s)\n", func, desc);
+	cupPrintf("%s:  bLength = %d, .bDescriptorType = %d (%s)\n",
 		func, p->bLength,
 		p->bDescriptorType, getNameOfbDecriptorType(p->bDescriptorType));
-	logPrintf("%s:  bcdUSB = 0x%03X\n", func, p->bcdUSB);
-	logPrintf("%s:  bDeviceClass = 0x%02X (%s), .bDeviceSubClass = 0x%02X\n",
+	cupPrintf("%s:  bcdUSB = 0x%03X\n", func, p->bcdUSB);
+	cupPrintf("%s:  bDeviceClass = 0x%02X (%s), .bDeviceSubClass = 0x%02X\n",
 		func, p->bDeviceClass, getNameOfbDeviceClass(p->bDeviceClass),
 		p->bDeviceSubClass);
-	logPrintf("%s:  bDeviceProtocol = 0x%02X\n",
+	cupPrintf("%s:  bDeviceProtocol = 0x%02X\n",
 		func, p->bDeviceProtocol);
-	logPrintf("%s:  bMaxPacketSize = %d\n",
+	cupPrintf("%s:  bMaxPacketSize = %d\n",
 		func, p->bMaxPacketSize);
-	logPrintf("%s:  idVendor = 0x%04X .idProduct = 0x%04X\n",
+	cupPrintf("%s:  idVendor = 0x%04X .idProduct = 0x%04X\n",
 		func, p->idVendor, p->idProduct);
-	logPrintf("%s:  bcdDevice = 0x%03X\n", func, p->bcdDevice);
-	logPrintf("%s:  iManufacturer = %d\n", func, p->iManufacturer);
-	logPrintf("%s:  iProduct = %d\n", func, p->iProduct);
-	logPrintf("%s:  iSerialNumber = %d\n", func, p->iSerialNumber);
+	cupPrintf("%s:  bcdDevice = 0x%03X\n", func, p->bcdDevice);
+	cupPrintf("%s:  iManufacturer = %d\n", func, p->iManufacturer);
+	cupPrintf("%s:  iProduct = %d\n", func, p->iProduct);
+	cupPrintf("%s:  iSerialNumber = %d\n", func, p->iSerialNumber);
 
-	logPrintf("%s:  bNumConfigurations = %d\n",
+	cupPrintf("%s:  bNumConfigurations = %d\n",
 		func, p->bNumConfigurations);
 
 	return 0;
@@ -122,51 +122,51 @@ static int dumpConf(const char *func, const char *desc,
 
 	p.conf = conf;
 	for (i = 0; i < bNumConfigurations; i++) {
-		logPrintf("%s: GET_DESCRIPTOR(%s INDEX:%d)\n",
+		cupPrintf("%s: GET_DESCRIPTOR(%s INDEX:%d)\n",
 			func, desc, i);
-		logPrintf("%s:  bLength = %d, bDescriptorType = %d (%s)\n",
+		cupPrintf("%s:  bLength = %d, bDescriptorType = %d (%s)\n",
 			func, p.conf->bLength, p.conf->bDescriptorType,
 			getNameOfbDecriptorType(p.conf->bDescriptorType));
-		logPrintf("%s:  wTotalLength = %d\n",
+		cupPrintf("%s:  wTotalLength = %d\n",
 			func, p.conf->wTotalLength);
-		logPrintf("%s:  bNumInterfaces = %d, bConfigurationValue = %d\n",
+		cupPrintf("%s:  bNumInterfaces = %d, bConfigurationValue = %d\n",
 			func, p.conf->bNumInterfaces, p.conf->bConfigurationValue);
-		logPrintf("%s:  iConfiguration = %d\n",
+		cupPrintf("%s:  iConfiguration = %d\n",
 			func, p.conf->iConfiguration);
 
 		bNumInterfaces = p.conf->bNumInterfaces;
 		p.i += p.conf->bLength;
 		for (j = 0; j < bNumInterfaces; j++) {
-			logPrintf("%s:  INTERFACE INDEX:%d\n", func, j);
-			logPrintf("%s:   bLength = %d, bDescriptorType = %d (%s)\n",
+			cupPrintf("%s:  INTERFACE INDEX:%d\n", func, j);
+			cupPrintf("%s:   bLength = %d, bDescriptorType = %d (%s)\n",
 				func, p.intf->bLength, p.intf->bDescriptorType,
 				getNameOfbDecriptorType(p.intf->bDescriptorType));
-			logPrintf("%s:   bInterfaceNumber = %d, bAlternateSetting = %d\n",
+			cupPrintf("%s:   bInterfaceNumber = %d, bAlternateSetting = %d\n",
 				func, p.intf->bInterfaceNumber, p.intf->bAlternateSetting);
-			logPrintf("%s:   bNumEndpoints = %d\n",
+			cupPrintf("%s:   bNumEndpoints = %d\n",
 				func, p.intf->bNumEndpoints);
-			logPrintf("%s:   bInterfaceClass = %d (%s), bInterfaceSubClass = %d\n",
+			cupPrintf("%s:   bInterfaceClass = %d (%s), bInterfaceSubClass = %d\n",
 				func, p.intf->bInterfaceClass,
 				getNameOfbInterfaceClass(p.intf->bInterfaceClass),
 				p.intf->bInterfaceSubClass);
-			logPrintf("%s:   bInterfaceProtocol = %d\n",
+			cupPrintf("%s:   bInterfaceProtocol = %d\n",
 				func, p.intf->bInterfaceProtocol);
-			logPrintf("%s:   iInterface = %d\n",
+			cupPrintf("%s:   iInterface = %d\n",
 				func, p.intf->iInterface);
 
 			bNumEndpoints = p.intf->bNumEndpoints;
 			p.i += p.intf->bLength;
 			for (k = 0; k < bNumEndpoints; k++) {
-				logPrintf("%s:   ENDPOINT INDEX:%d", func, k);
-				logPrintf("%s:   bLength = %d, bDescriptorType = %d (%s)\n",
+				cupPrintf("%s:   ENDPOINT INDEX:%d", func, k);
+				cupPrintf("%s:   bLength = %d, bDescriptorType = %d (%s)\n",
 					func, p.endp->bLength, p.endp->bDescriptorType,
 					getNameOfbDecriptorType(p.endp->bDescriptorType));
-				logPrintf("%s:   bEndpointAddress = 0x%02X, bmAtributes = 0x%02X\n",
+				cupPrintf("%s:   bEndpointAddress = 0x%02X, bmAtributes = 0x%02X\n",
 					func, p.endp->bEndpointAddress,
 					p.endp->bmAttributes);
-				logPrintf("%s:   wMaxPacketSize = %d\n",
+				cupPrintf("%s:   wMaxPacketSize = %d\n",
 					func, p.endp->wMaxPacketSize);
-				logPrintf("%s:   bInterval = %d\n",
+				cupPrintf("%s:   bInterval = %d\n",
 					func, p.endp->bInterval);
 
 				p.i += p.endp->bLength;
@@ -187,8 +187,8 @@ static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 	if (req == NULL || req->endp == NULL || req->data == NULL)
 		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
 
-	logPrintf("%s: endpnum = %d\n", f, req->endp->endpnum);
-	logPrintf("%s: size = %d\n", f, req->size);
+	cupPrintf("%s: endpnum = %d\n", f, req->endp->endpnum);
+	cupPrintf("%s: size = %d\n", f, req->size);
 
 	cupIoWrite(f, req->data, req->size);
 
@@ -205,10 +205,10 @@ static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 		default:
 			p = "unknown";
 	}
-	logPrintf("%s: recvsize = %d, retcode = %d (%s)\n",
+	cupPrintf("%s: recvsize = %d, retcode = %d (%s)\n",
 		f, req->recvsize, req->retcode, p);
 
-	logPrintf("%s: return = 0x%08X\n", f, ret);
+	cupPrintf("%s: return = 0x%08X\n", f, ret);
 	return ret;
 }
 
@@ -222,8 +222,8 @@ static int hookUsbbdReqRecv(struct UsbdDeviceReq *req)
 	if (req == NULL || req->endp == NULL || req->data == NULL)
 		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
 
-	logPrintf("%s: endpnum = %d\n", f, req->endp->endpnum);
-	logPrintf("%s: size = %d\n", f, req->size);
+	cupPrintf("%s: endpnum = %d\n", f, req->endp->endpnum);
+	cupPrintf("%s: size = %d\n", f, req->size);
 
 	_sceUsbbdReqRecv = calls[CALL_sceUsbbdReqRecv].org;
 	ret = _sceUsbbdReqRecv(req);
@@ -240,10 +240,10 @@ static int hookUsbbdReqRecv(struct UsbdDeviceReq *req)
 		default:
 			p = "unknown";
 	}
-	logPrintf("%s: recvsize = %d, retcode = %d (%s)\n",
+	cupPrintf("%s: recvsize = %d, retcode = %d (%s)\n",
 		f, req->recvsize, req->retcode, p);
 
-	logPrintf("%s: return = 0x%08X\n", f, ret);
+	cupPrintf("%s: return = 0x%08X\n", f, ret);
 	return ret;
 }
 
@@ -256,12 +256,12 @@ static int hookUsbbdClearFIFO(struct UsbEndpoint *endp)
 	if (endp == NULL)
 		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
 
-	logPrintf("%s: endpnum = %d\n", f, endp->endpnum);
+	cupPrintf("%s: endpnum = %d\n", f, endp->endpnum);
 
 	_sceUsbbdClearFIFO = calls[CALL_sceUsbbdClearFIFO].org;
 	ret = _sceUsbbdClearFIFO(endp);
 
-	logPrintf("%s: return = 0x%08X\n", f, ret);
+	cupPrintf("%s: return = 0x%08X\n", f, ret);
 	return ret;
 }
 
@@ -275,7 +275,7 @@ static int hookUsbbdRegister(struct UsbDriver *drv)
 		|| drv->devp == NULL || drv->confp == NULL || drv->str == NULL)
 		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
 
-	logPrintf("%s: name = %s, endpoints = %d,\n",
+	cupPrintf("%s: name = %s, endpoints = %d,\n",
 		f, drv->name == NULL ? "NULL" : drv->name, drv->endpoints);
 
 	dumpDev(f, "DEVICE (HI)", drv->devp_hi);
@@ -289,7 +289,7 @@ static int hookUsbbdRegister(struct UsbDriver *drv)
 	_sceUsbbdRegister = calls[CALL_sceUsbbdRegister].org;
 	ret = _sceUsbbdRegister(drv);
 
-	logPrintf("%s: return = 0x%08X\n", f, ret);
+	cupPrintf("%s: return = 0x%08X\n", f, ret);
 	return ret;
 }
 
@@ -299,12 +299,12 @@ static int hookUsbbdUnregister(struct UsbDriver *drv)
 	int (* _sceUsbbdUnregister)(struct UsbDriver *drv);
 	int ret;
 
-	logPrintf("%s: name = %s", f, drv->name == NULL ? "NULL" : drv->name);
+	cupPrintf("%s: name = %s", f, drv->name == NULL ? "NULL" : drv->name);
 
 	_sceUsbbdUnregister = calls[CALL_sceUsbbdUnregister].org;
 	ret = _sceUsbbdUnregister(drv);
 
-	logPrintf("%s: return = 0x%08X\n", f, ret);
+	cupPrintf("%s: return = 0x%08X\n", f, ret);
 	return ret;
 }
 
@@ -314,13 +314,13 @@ static int hookUsbGetState(const char *driverName)
 	int (* _sceUsbGetState)(const char *driverName);
 	int ret;
 
-	logPrintf("%s: driverName = %s\n",
+	cupPrintf("%s: driverName = %s\n",
 		f, driverName == NULL ? "NULL" : driverName);
 
 	_sceUsbGetState = calls[CALL_sceUsbGetState].org;
 	ret = _sceUsbGetState(driverName);
 
-	logPrintf("%s: return = 0x%08X\n", f, ret);
+	cupPrintf("%s: return = 0x%08X\n", f, ret);
 	return ret;
 }
 
@@ -333,12 +333,12 @@ static int hookUsbbdReqCancelAll(struct UsbEndpoint *endp)
 	if (endp == NULL)
 		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
 
-	logPrintf("%s: endpnum = %d\n", f, endp->endpnum);
+	cupPrintf("%s: endpnum = %d\n", f, endp->endpnum);
 
 	_sceUsbbdReqCancelAll = calls[CALL_sceUsbbdReqCancelAll].org;
 	ret = _sceUsbbdReqCancelAll(endp);
 
-	logPrintf("%s: return = 0x%08X\n", f, ret);
+	cupPrintf("%s: return = 0x%08X\n", f, ret);
 	return ret;
 }
 
@@ -351,12 +351,12 @@ static int hookUsbbdStall(struct UsbEndpoint *endp)
 	if (endp == NULL)
 		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
 
-	logPrintf("%s: endpnum = %d\n", f, endp->endpnum);
+	cupPrintf("%s: endpnum = %d\n", f, endp->endpnum);
 
 	_sceUsbbdStall = calls[CALL_sceUsbbdStall].org;
 	ret = _sceUsbbdStall(endp);
 
-	logPrintf("%s: return = 0x%08X\n", f, ret);
+	cupPrintf("%s: return = 0x%08X\n", f, ret);
 	return ret;
 }
 

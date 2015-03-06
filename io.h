@@ -3,8 +3,8 @@
 
 #include <psptypes.h>
 
-int logPuts(const char *s);
-int logPrintf(const char *fmt, ...);
+int cupPuts(const char *s);
+int cupPrintf(const char *fmt, ...);
 
 int cupIoInit(SceSize len, char *path);
 int cupIoDeinit();
