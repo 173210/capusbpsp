@@ -179,7 +179,7 @@ static int dumpConf(const char *func, const char *desc,
 
 static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 {
-	static const char f[] = "sceUsbbdReqSend";
+	static const char *f = "sceUsbbdReqSend";
 	int (* _sceUsbbdReqSend)(struct UsbdDeviceReq *req);
 	const char *p;
 	int ret;

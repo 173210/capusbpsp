@@ -15,10 +15,10 @@ struct _queue_t {
 
 static SceUID cupIoThid = 0;
 
-static size_t left = 0;
-static char buf[256];
-
 static queue_t *queue = NULL;
+
+static size_t left = 0;
+static char buf[4096];
 
 static int cupIoThread(SceSize args, void *argp)
 {
