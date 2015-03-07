@@ -160,7 +160,7 @@ int cupIoDeinit()
 	return cupIoThid ? sceKernelTerminateDeleteThread(cupIoThid) : 0;
 }
 
-int cupIoWrite(const char *pre, void *data, SceSize size)
+int cupIoWrite(const char *pre, const void *data, SceSize size)
 {
 	pspTime time;
 	SceUID blockid;

@@ -8,5 +8,5 @@ int cupPrintf(const char *fmt, ...);
 
 int cupIoInit(SceSize len, char *path);
 int cupIoDeinit();
-int cupIoWrite(const char *pre, void *data, SceSize size);
+int cupIoWrite(const char *pre, const void *data, SceSize size);
 #endif
