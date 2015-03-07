@@ -141,7 +141,7 @@ int cupIoInit(SceSize len, char *path)
 	int ret;
 
 	ret = sceKernelCreateThread(
-		"cupIoThread", cupIoThread, 16, 2048, 0, NULL);
+		"cupIoThread", cupIoThread, 1, 2048, 0, NULL);
 	if (ret < 0)
 		return cupIoThid;
 	cupIoThid = ret;
@@ -172,7 +172,7 @@ int cupIoWrite(const char *pre, void *data, SceSize size)
 
 	len = strlen(pre);
 
-	blockid = sceKernelAllocPartitionMemory(PSP_MEMORY_PARTITION_KERNEL,
+	blockid = sceKernelAllocPartitionMemory(PSP_MEMORY_PARTITION_USER,
 		"cupIo", PSP_SMEM_Low, sizeof(queue_t) + len + 16 + size, NULL);
 	if (blockid < 0)
 		return blockid;
