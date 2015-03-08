@@ -36,6 +36,7 @@ typedef struct {
 } stub_t;
 
 static const int32_t J_OPCODE = 0x08000000;
+static const char *libname = "sceUsbBus_driver";
 
 static char modname[32];
 static const SceModule2 *module = NULL;
@@ -152,7 +153,7 @@ int mainThread(SceSize args, void *argp)
 
 	sceKernelChangeThreadPriority(thid, 1);
 
-	stub = findStub(module, "sceUsbBus_driver");
+	stub = findStub(module, libname);
 	
 	if (stub == NULL)
 		return SCE_KERNEL_ERROR_ERROR;
@@ -189,7 +190,7 @@ int module_stop()
 		sceKernelTerminateDeleteThread(thid);
 
 	if (module == (SceModule2 *)sceKernelFindModuleByName(modname)
-		&& stub == findStub(module, "sceUsbBus_driver"))
+		&& stub == findStub(module, libname))
 		unhook(stub, calls, CALL_NUM);
 
 	return 0;
