@@ -3,6 +3,7 @@
 #include <string.h>
 #include <pspkernel.h>
 #include <psprtc.h>
+#include "main.h"
 #include "io.h"
 
 typedef struct _queue_t queue_t;
@@ -13,35 +14,33 @@ struct _queue_t {
 	size_t size;
 };
 
-static SceUID cupIoThid = 0;
-
 static queue_t *queue = NULL;
 
-static size_t left = 0;
+static int left = 0;
 static char buf[4096];
 
-static int cupIoThread(SceSize args, void *argp)
+void cupIoWork()
 {
 	SceUID log = -1;
 	SceUID fd;
 	const char *p;
 	int ret;
 
-	ret = sceIoChdir(argp);
-	if (ret)
-		return ret;
-
 	while (1) {
 		sceKernelSleepThread();
 
-		if (left) {
+		while (left) {
 			if (log < 0)
 				log = sceIoOpen("LOG.TXT",
 					PSP_O_WRONLY | PSP_O_APPEND | PSP_O_CREAT,
 					0777);
 			if (log >= 0) {
-				sceIoWrite(log, buf, left);
-				left = 0;
+				ret = sceIoWrite(log, buf, left);
+				if (ret > 0) {
+					left -= ret;
+					if (left < 0)
+						left = 0;
+				}
 
 				if (!sceIoClose(log))
 					log = -1;
@@ -65,7 +64,7 @@ static int cupIoThread(SceSize args, void *argp)
 	}
 }
 
-int logTime()
+int cupPrintTime()
 {
 	int ret;
 	pspTime time;
@@ -95,7 +94,7 @@ int cupPuts(const char *s)
 	if (left >= sizeof(buf))
 		return SCE_KERNEL_ERROR_NO_MEMORY;
 
-	logTime();
+	cupPrintTime();
 
 	p = buf + left;
 	while (*s && left < sizeof(buf)) {
@@ -105,7 +104,7 @@ int cupPuts(const char *s)
 		left++;
 	}
 
-	sceKernelWakeupThread(cupIoThid);
+	sceKernelWakeupThread(thid);
 
 	return 0;
 }
@@ -121,7 +120,7 @@ int cupPrintf(const char *fmt, ...)
 	if (left >= sizeof(buf))
 		return 0;
 
-	logTime();
+	cupPrintTime();
 
 	va_start(va, fmt);
 
@@ -131,33 +130,9 @@ int cupPrintf(const char *fmt, ...)
 
 	va_end(va);
 
-	sceKernelWakeupThread(cupIoThid);
+	sceKernelWakeupThread(thid);
 
 	return ret;
-}
-
-int cupIoInit(SceSize len, char *path)
-{
-	int ret;
-
-	ret = sceKernelCreateThread(
-		"cupIoThread", cupIoThread, 1, 2048, 0, NULL);
-	if (ret < 0)
-		return cupIoThid;
-	cupIoThid = ret;
-
-	ret = sceKernelStartThread(cupIoThid, len, path);
-	if (ret)
-		sceKernelDeleteThread(cupIoThid);
-
-	cupPrintf("capusbpsp started\n");
-
-	return ret;
-}
-
-int cupIoDeinit()
-{
-	return cupIoThid ? sceKernelTerminateDeleteThread(cupIoThid) : 0;
 }
 
 int cupIoWrite(const char *pre, const void *data, SceSize size)
@@ -195,7 +170,7 @@ int cupIoWrite(const char *pre, const void *data, SceSize size)
 
 	memcpy(p + len + 1, data, size);
 
-	sceKernelWakeupThread(cupIoThid);
+	sceKernelWakeupThread(thid);
 
 	return 0;
 }

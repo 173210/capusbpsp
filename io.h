@@ -3,10 +3,12 @@
 
 #include <psptypes.h>
 
+void cupIoWork();
+
+int cupPrintTime();
 int cupPuts(const char *s);
 int cupPrintf(const char *fmt, ...);
 
-int cupIoInit(SceSize len, char *path);
-int cupIoDeinit();
 int cupIoWrite(const char *pre, const void *data, SceSize size);
+
 #endif

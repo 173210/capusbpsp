@@ -41,7 +41,7 @@ static char modname[32];
 static const SceModule2 *module = NULL;
 static const stub_t *stub = NULL;
 
-static SceUID mainThid = 0;
+SceUID thid = 0;
 
 static int32_t jAsm(const void *p)
 {
@@ -150,16 +150,18 @@ int mainThread(SceSize args, void *argp)
 		module = (SceModule2 *)sceKernelFindModuleByName(modname);
 	} while (module == NULL);
 
+	sceKernelChangeThreadPriority(thid, 1);
+
 	stub = findStub(module, "sceUsbBus_driver");
 	
 	if (stub == NULL)
-		ret = SCE_KERNEL_ERROR_ERROR;
-	else {
-		ret = hook(stub, calls, CALL_NUM);
-		cupIoInit(args, argp);
-	}
+		return SCE_KERNEL_ERROR_ERROR;
+
+	hook(stub, calls, CALL_NUM);
+	cupIoWork();
 
 exit:
+	thid = 0;
 	sceKernelExitDeleteThread(ret);
 	return ret;
 }
@@ -172,21 +174,19 @@ int module_start(SceSize args, void *argp)
 		module_info.modname, mainThread, 111, 2048, 0, NULL);
 	if (ret < 0)
 		return ret;
-	mainThid = ret;
+	thid = ret;
 
-	ret = sceKernelStartThread(mainThid, args, argp);
+	ret = sceKernelStartThread(thid, args, argp);
 	if (ret)
-		sceKernelDeleteThread(mainThid);
+		sceKernelDeleteThread(thid);
 
 	return ret;
 }
 
 int module_stop()
 {
-	if (mainThid)
-		sceKernelTerminateDeleteThread(mainThid);
-
-	cupIoDeinit();
+	if (thid)
+		sceKernelTerminateDeleteThread(thid);
 
 	if (module == (SceModule2 *)sceKernelFindModuleByName(modname)
 		&& stub == findStub(module, "sceUsbBus_driver"))
