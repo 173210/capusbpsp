@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <pspkernel.h>
 #include <psprtc.h>
 #include <pspusbbus.h>
@@ -9,6 +10,8 @@ typedef struct {
 	uint8_t index;
 	const char *name;
 } name_t;
+
+int (* _sceUsbbdReqRecvCB)(struct UsbdDeviceReq *, int, int);
 
 static const char *getNameOfbDecriptorType(unsigned bDecriptorType)
 {
@@ -212,6 +215,12 @@ static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 	return ret;
 }
 
+static int hookUsbbdReqRecvCB(struct UsbdDeviceReq *req, int a1, int a2)
+{
+	cupIoWrite("recv", req->data, req->recvsize);
+	return _sceUsbbdReqRecvCB(req, a1, a2);
+}
+
 static int hookUsbbdReqRecv(struct UsbdDeviceReq *req)
 {
 	static const char *f = "sceUsbbdReqRecv";
@@ -222,13 +231,17 @@ static int hookUsbbdReqRecv(struct UsbdDeviceReq *req)
 	if (req == NULL || req->endp == NULL || req->data == NULL)
 		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
 
+	_sceUsbbdReqRecv = calls[CALL_sceUsbbdReqRecv].org;
+
 	cupPrintf("%s: endpnum = %d\n", f, req->endp->endpnum);
 	cupPrintf("%s: size = %d\n", f, req->size);
 
-	_sceUsbbdReqRecv = calls[CALL_sceUsbbdReqRecv].org;
+	_sceUsbbdReqRecvCB = req->func;
+	req->func = hookUsbbdReqRecvCB;
+
 	ret = _sceUsbbdReqRecv(req);
 
-	cupIoWrite(f, req->data, req->size);
+	req->func = _sceUsbbdReqRecvCB;
 
 	switch (req->retcode) {
 		case 0:
