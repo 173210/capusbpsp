@@ -190,8 +190,9 @@ static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 	if (req == NULL || req->endp == NULL || req->data == NULL)
 		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
 
-	cupPrintf("%s: endpnum = %d\n", f, req->endp->endpnum);
-	cupPrintf("%s: size = %d\n", f, req->size);
+	cupPrintf("%s: req = 0x%08X\n", f, (int)req);
+	cupPrintf("%s: endpnum = %d, size = %d\n", f,
+		req->endp->endpnum, req->size);
 
 	cupIoWrite(f, req->data, req->size);
 
@@ -237,8 +238,9 @@ static int hookUsbbdReqRecv(struct UsbdDeviceReq *req)
 
 	_sceUsbbdReqRecv = calls[CALL_sceUsbbdReqRecv].org;
 
-	cupPrintf("%s: endpnum = %d\n", f, req->endp->endpnum);
-	cupPrintf("%s: size = %d\n", f, req->size);
+	cupPrintf("%s: req = 0x%08X\n", f, (int)req);
+	cupPrintf("%s: endpnum = %d, size = %d\n", f,
+		req->endp->endpnum, req->size);
 
 	_sceUsbbdReqRecvCB = req->func;
 	req->func = hookUsbbdReqRecvCB;
