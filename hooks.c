@@ -209,8 +209,7 @@ static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 		default:
 			p = "unknown";
 	}
-	cupPrintf("%s: recvsize = %d, retcode = %d (%s)\n",
-		f, req->recvsize, req->retcode, p);
+	cupPrintf("%s: retcode = %d (%s)\n", f, req->retcode, p);
 
 	cupPrintf("%s: return = 0x%08X\n", f, ret);
 	return ret;
@@ -259,8 +258,7 @@ static int hookUsbbdReqRecv(struct UsbdDeviceReq *req)
 		default:
 			p = "unknown";
 	}
-	cupPrintf("%s: recvsize = %d, retcode = %d (%s)\n",
-		f, req->recvsize, req->retcode, p);
+	cupPrintf("%s: retcode = %d (%s)\n", f, req->retcode, p);
 
 	cupPrintf("%s: return = 0x%08X\n", f, ret);
 	return ret;
