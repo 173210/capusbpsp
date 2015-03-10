@@ -219,10 +219,16 @@ static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 
 static int hookUsbbdReqRecvCB(struct UsbdDeviceReq *req, void *a1, int a2)
 {
+	const char *f = "recv";
+
 	if (req == NULL)
 		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
 
-	cupIoWrite("recv", req->data, req->recvsize);
+	cupPrintf("%s: req = 0x%08X\n", f, (int)req);
+	cupPrintf("%s: recvsize = %d, retcode = %d (%s)", f, req->recvsize,
+		req->retcode, getNameOfReqRet(req->retcode));
+
+	cupIoWrite(f, req->data, req->recvsize);
 
 	return _sceUsbbdReqRecvCB(req, a1, a2);
 }
