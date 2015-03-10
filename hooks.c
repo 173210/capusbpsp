@@ -180,11 +180,22 @@ static int dumpConf(const char *func, const char *desc,
 	return 0;
 }
 
+static const char *getNameOfReqRet(int retcode)
+{
+	switch (retcode) {
+		case 0:
+			return "success";
+		case -3:
+			return "cancelled";
+		default:
+			return "unknown";
+	}
+}
+
 static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 {
 	const char *f = "sceUsbbdReqSend";
 	int (* _sceUsbbdReqSend)(struct UsbdDeviceReq *req);
-	const char *p;
 	int ret;
 
 	if (req == NULL || req->endp == NULL || req->data == NULL)
@@ -199,17 +210,8 @@ static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 	_sceUsbbdReqSend = calls[CALL_sceUsbbdReqSend].org;
 	ret = _sceUsbbdReqSend(req);
 
-	switch (req->retcode) {
-		case 0:
-			p = "success";
-			break;
-		case -3:
-			p = "cancelled";
-			break;
-		default:
-			p = "unknown";
-	}
-	cupPrintf("%s: retcode = %d (%s)\n", f, req->retcode, p);
+	cupPrintf("%s: retcode = %d (%s)\n", f,
+		req->retcode, getNameOfReqRet(req->retcode));
 
 	cupPrintf("%s: return = 0x%08X\n", f, ret);
 	return ret;
@@ -229,7 +231,6 @@ static int hookUsbbdReqRecv(struct UsbdDeviceReq *req)
 {
 	const char *f = "sceUsbbdReqRecv";
 	int (* _sceUsbbdReqRecv)(struct UsbdDeviceReq *req);
-	const char *p;
 	int ret;
 
 	if (req == NULL || req->endp == NULL || req->data == NULL)
@@ -248,17 +249,8 @@ static int hookUsbbdReqRecv(struct UsbdDeviceReq *req)
 
 	req->func = _sceUsbbdReqRecvCB;
 
-	switch (req->retcode) {
-		case 0:
-			p = "success";
-			break;
-		case -3:
-			p = "cancelled";
-			break;
-		default:
-			p = "unknown";
-	}
-	cupPrintf("%s: retcode = %d (%s)\n", f, req->retcode, p);
+	cupPrintf("%s: retcode = %d (%s)\n", f,
+		req->retcode, getNameOfReqRet(req->retcode));
 
 	cupPrintf("%s: return = 0x%08X\n", f, ret);
 	return ret;
