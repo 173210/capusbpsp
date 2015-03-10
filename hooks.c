@@ -182,7 +182,7 @@ static int dumpConf(const char *func, const char *desc,
 
 static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 {
-	static const char *f = "sceUsbbdReqSend";
+	const char *f = "sceUsbbdReqSend";
 	int (* _sceUsbbdReqSend)(struct UsbdDeviceReq *req);
 	const char *p;
 	int ret;
@@ -227,7 +227,7 @@ static int hookUsbbdReqRecvCB(struct UsbdDeviceReq *req, void *a1, int a2)
 
 static int hookUsbbdReqRecv(struct UsbdDeviceReq *req)
 {
-	static const char *f = "sceUsbbdReqRecv";
+	const char *f = "sceUsbbdReqRecv";
 	int (* _sceUsbbdReqRecv)(struct UsbdDeviceReq *req);
 	const char *p;
 	int ret;
@@ -266,7 +266,7 @@ static int hookUsbbdReqRecv(struct UsbdDeviceReq *req)
 
 static int hookUsbbdClearFIFO(struct UsbEndpoint *endp)
 {
-	static const char *f = "sceUsbbdClearFIFO";
+	const char *f = "sceUsbbdClearFIFO";
 	int (* _sceUsbbdClearFIFO)(struct UsbEndpoint *endp);
 	int ret;
 
@@ -284,7 +284,7 @@ static int hookUsbbdClearFIFO(struct UsbEndpoint *endp)
 
 static int hookUsbbdRegister(struct UsbDriver *drv)
 {
-	static const char *f = "sceUsbbdRegister";
+	const char *f = "sceUsbbdRegister";
 	int (* _sceUsbbdRegister)(struct UsbDriver *drv);
 	int ret;
 
@@ -312,7 +312,7 @@ static int hookUsbbdRegister(struct UsbDriver *drv)
 
 static int hookUsbbdUnregister(struct UsbDriver *drv)
 {
-	static const char *f = "sceUsbbdUnregister";
+	const char *f = "sceUsbbdUnregister";
 	int (* _sceUsbbdUnregister)(struct UsbDriver *drv);
 	int ret;
 
@@ -327,7 +327,7 @@ static int hookUsbbdUnregister(struct UsbDriver *drv)
 
 static int hookUsbGetState(const char *driverName)
 {
-	static const char *f = "sceUsbGetState";
+	const char *f = "sceUsbGetState";
 	int (* _sceUsbGetState)(const char *driverName);
 	int ret;
 
@@ -343,7 +343,7 @@ static int hookUsbGetState(const char *driverName)
 
 static int hookUsbbdReqCancelAll(struct UsbEndpoint *endp)
 {
-	static const char *f = "sceUsbbdReqCancelAll";
+	const char *f = "sceUsbbdReqCancelAll";
 	int (* _sceUsbbdReqCancelAll)(struct UsbEndpoint *endp);
 	int ret;
 
@@ -359,9 +359,24 @@ static int hookUsbbdReqCancelAll(struct UsbEndpoint *endp)
 	return ret;
 }
 
+static int hookUsbbdReqCancel(struct UsbdDeviceReq *req)
+{
+	const char *f = "sceUsbbdReqCancel";
+	int (* _sceUsbbdReqCancel)(struct UsbdDeviceReq *req);
+	int ret;
+
+	cupPrintf("%s: req = 0x%08X\n", f, (intptr_t)req);
+
+	_sceUsbbdReqCancel = calls[CALL_sceUsbbdReqCancel].org;
+	ret = _sceUsbbdReqCancel(req);
+
+	cupPrintf("%s: return = 0x%08X\n", f, ret);
+	return ret;
+}
+
 static int hookUsbbdStall(struct UsbEndpoint *endp)
 {
-	static const char *f = "sceUsbbdReqCancelAll";
+	const char *f = "sceUsbbdReqCancelAll";
 	int (* _sceUsbbdStall)(struct UsbEndpoint *endp);
 	int ret;
 
@@ -412,6 +427,11 @@ call_t calls[] = {
 		.nid = 0xC5E53685,
 		.org = NULL,
 		.hook = hookUsbbdReqCancelAll
+	},
+	[CALL_sceUsbbdReqCancel] = {
+		.nid = 0xCC57EC9D,
+		.org = NULL,
+		.hook = hookUsbbdReqCancel
 	},
 	[CALL_sceUsbbdStall] = {
 		.nid = 0xE65441C1,

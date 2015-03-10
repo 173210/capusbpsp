@@ -11,6 +11,7 @@ enum {
 	CALL_sceUsbbdUnregister,
 	CALL_sceUsbGetState,
 	CALL_sceUsbbdReqCancelAll,
+	CALL_sceUsbbdReqCancel,
 	CALL_sceUsbbdStall,
 
 	CALL_NUM
