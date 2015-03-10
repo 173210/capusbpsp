@@ -217,7 +217,11 @@ static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 
 static int hookUsbbdReqRecvCB(struct UsbdDeviceReq *req, void *a1, int a2)
 {
+	if (req == NULL)
+		return SCE_KERNEL_ERROR_ILLEGAL_ADDRESS;
+
 	cupIoWrite("recv", req->data, req->recvsize);
+
 	return _sceUsbbdReqRecvCB(req, a1, a2);
 }
 
