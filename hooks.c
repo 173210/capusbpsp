@@ -11,7 +11,7 @@ typedef struct {
 	const char *name;
 } name_t;
 
-int (* _sceUsbbdReqRecvCB)(struct UsbdDeviceReq *, int, int);
+int (* _sceUsbbdReqRecvCB)(struct UsbdDeviceReq *, void *, int);
 
 static const char *getNameOfbDecriptorType(unsigned bDecriptorType)
 {
@@ -215,7 +215,7 @@ static int hookUsbbdReqSend(struct UsbdDeviceReq *req)
 	return ret;
 }
 
-static int hookUsbbdReqRecvCB(struct UsbdDeviceReq *req, int a1, int a2)
+static int hookUsbbdReqRecvCB(struct UsbdDeviceReq *req, void *a1, int a2)
 {
 	cupIoWrite("recv", req->data, req->recvsize);
 	return _sceUsbbdReqRecvCB(req, a1, a2);
