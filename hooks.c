@@ -11,7 +11,7 @@ typedef struct {
 	const char *name;
 } name_t;
 
-int (* _sceUsbbdReqRecvCB)(struct UsbdDeviceReq *, void *, int);
+static int (* _sceUsbbdReqRecvCB)(struct UsbdDeviceReq *, void *, int);
 
 static const char *getNameOfbDecriptorType(unsigned bDecriptorType)
 {
