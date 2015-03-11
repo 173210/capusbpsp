@@ -23,7 +23,7 @@
 #include "io.h"
 #include "hooks.h"
 
-PSP_MODULE_INFO("CAPUSBPSP", PSP_MODULE_KERNEL, 0, 1);
+PSP_MODULE_INFO("CAPUSBPSP", PSP_MODULE_KERNEL, 1, 0);
 
 typedef struct {
 	char *name;
