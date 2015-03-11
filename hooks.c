@@ -28,6 +28,7 @@ typedef struct {
 	const char *name;
 } name_t;
 
+static void **reqRecvFunc = NULL;
 static int (* _sceUsbbdReqRecvCB)(struct UsbdDeviceReq *, void *, int);
 
 static const char *getNameOfbDecriptorType(unsigned bDecriptorType)
@@ -265,12 +266,14 @@ static int hookUsbbdReqRecv(struct UsbdDeviceReq *req)
 	cupPrintf("%s: endpnum = %d, size = %d\n", f,
 		req->endp->endpnum, req->size);
 
+	if (reqRecvFunc != NULL)
+		*reqRecvFunc = _sceUsbbdReqRecvCB;
+	reqRecvFunc = &req->func;
+
 	_sceUsbbdReqRecvCB = req->func;
 	req->func = hookUsbbdReqRecvCB;
 
 	ret = _sceUsbbdReqRecv(req);
-
-	req->func = _sceUsbbdReqRecvCB;
 
 	cupPrintf("%s: retcode = %d (%s)\n", f,
 		req->retcode, getNameOfReqRet(req->retcode));
